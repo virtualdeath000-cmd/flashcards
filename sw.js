@@ -1,6 +1,6 @@
 // Flashcards service worker — bulletproof offline caching.
 // Bump CACHE_VERSION whenever you change index.html so users get the update.
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = "flashcards-" + CACHE_VERSION;
 const ASSETS = ["./", "./index.html"];
 
