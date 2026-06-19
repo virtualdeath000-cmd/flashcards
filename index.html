@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hive_cards</title>
+<meta name="apple-mobile-web-app-title" content="Hive_cards">
+<style>
+  :root {
+    --bg: #0F0000;
+    --fg: #FFFFFF;
+    --surface: #B87FB2;
+    --surface-fg: #FFFFFF;
+    --primary: #FFB5FA;
+    --primary-fg: #4a1a45;
+    --primary-active: #ec9ce6;
+    --danger: #FF5500;
+    --danger-fg: #FFFFFF;
+    --danger-active: #cc4400;
+    --input-bg: #0D0D0D;
+    --input-fg: #FFFFFF;
+    --input-border: #1f1f1f;
+    --btn: #2a2a32;
+    --btn-fg: #FFFFFF;
+    --btn-active: #3a3a44;
+    --ghost-active: #1f1f26;
+    --play-card: #1c1c22;
+    --play-card-back: #232330;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--fg);
+    min-height: 100vh;
+    -webkit-user-select: none; user-select: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .app { max-width: 640px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+  h1 { font-size: 22px; margin: 8px 0 16px; font-weight: 600; letter-spacing: -0.3px; }
+  h2 { font-size: 18px; margin: 0; font-weight: 600; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row.between { justify-content: space-between; }
+  .grow { flex: 1; }
+  button, .btn {
+    background: var(--btn); color: var(--btn-fg);
+    border: none; border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 16px; font-weight: 500;
+    cursor: pointer; touch-action: manipulation;
+    font-family: inherit;
+  }
+  button:active { background: var(--btn-active); }
+  .btn-primary { background: var(--primary); color: var(--primary-fg); }
+  .btn-primary:active { background: var(--primary-active); }
+  .btn-danger { background: var(--danger); color: var(--danger-fg); }
+  .btn-danger:active { background: var(--danger-active); }
+  .btn-ghost { background: transparent; padding: 8px 10px; }
+  .btn-ghost:active { background: var(--ghost-active); }
+  .btn-small { padding: 8px 12px; font-size: 14px; }
+  .icon-btn {
+    width: 40px; height: 40px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  input, textarea {
+    width: 100%;
+    background: var(--input-bg); color: var(--input-fg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    -webkit-user-select: text; user-select: text;
+  }
+  textarea { resize: none; min-height: 80px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+  .list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .deck-card {
+    background: var(--surface);
+    color: var(--surface-fg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .deck-card .meta { font-size: 13px; color: var(--surface-fg); margin-top: 2px; }
+  .deck-card .info { flex: 1; min-width: 0; }
+  .deck-card .info > div:first-child {
+    font-weight: 600; font-size: 16px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-item {
+    background: var(--surface);
+    color: var(--surface-fg);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .card-item .sides { flex: 1; min-width: 0; font-size: 14px; }
+  .card-item .side-label { color: var(--surface-fg); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-item .side-text { margin: 2px 0 8px; word-wrap: break-word; }
+  .card-item .side-text:last-child { margin-bottom: 0; }
+  .empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--fg);
+  }
+  .fab-row {
+    display: flex; gap: 10px; margin-top: 16px;
+  }
+  .fab-row button { flex: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    color: var(--surface-fg);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%; max-width: 560px;
+  }
+  .modal h3 { margin: 0 0 14px; font-size: 20px; color: var(--surface-fg); }
+  .modal .actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal .actions button { flex: 1; }
+  .modal textarea { min-height: 120px; font-size: 17px; }
+  .add-another {
+    width: 100%;
+    margin-top: 10px;
+    padding: 18px;
+    font-size: 22px;
+    font-weight: 600;
+    background: var(--primary);
+    color: var(--primary-fg);
+  }
+  .add-another:active { background: var(--primary-active); }
+  #modal-ok, #modal-cancel { background: var(--primary); color: var(--primary-fg); }
+  #modal-ok:active, #modal-cancel:active { background: var(--primary-active); }
+  .top-corner-actions {
+    display: flex; gap: 8px;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+  .top-corner-actions button {
+    padding: 8px 14px;
+    font-size: 14px;
+    background: var(--play-card);
+  }
+
+  /* Play view */
+  .play-card {
+    background: var(--play-card);
+    border-radius: 18px;
+    min-height: 60vh;
+    padding: 24px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .play-card.back { background: var(--play-card-back); }
+  .play-card-text {
+    width: 100%; max-width: 100%;
+    text-align: center;
+    font-size: 22px; line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    -webkit-user-select: none; user-select: none;
+  }
+  .progress {
+    text-align: center; color: var(--fg); font-size: 14px; margin: 12px 0;
+  }
+  .play-controls { display: flex; gap: 10px; margin-top: 16px; }
+  .play-controls button { flex: 1; padding: 16px; font-size: 17px; }
+  .practice-box {
+    margin-top: 12px;
+    min-height: 90px;
+  }
+  .toggle-on { background: var(--primary) !important; color: var(--primary-fg); }
+
+  .hidden { display: none !important; }
+  .menu {
+    display: flex; gap: 6px;
+  }
+  .file-input { display: none; }
+  .pill {
+    font-size: 12px; padding: 3px 8px; border-radius: 8px;
+    background: var(--btn); color: var(--btn-fg);
+  }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--btn); color: var(--btn-fg);
+    padding: 12px 20px; border-radius: 12px;
+    font-size: 14px; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+  .theme-row {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: var(--primary-fg);
+    text-align: left;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .theme-row:active { background: var(--primary-active); }
+  .theme-row.theme-current { background: var(--primary-active); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Deck list view -->
+  <div id="view-decks">
+    <div class="top-corner-actions" id="top-actions">
+      <button id="btn-themes">Themes</button>
+      <button id="btn-sync">Sync</button>
+      <button id="btn-import">Import</button>
+      <button id="btn-export">Export</button>
+    </div>
+    <h1>Hive_cards</h1>
+    <div id="deck-list" class="list"></div>
+    <div class="fab-row">
+      <button class="btn-primary" id="btn-new-deck">+ New Deck</button>
+    </div>
+  </div>
+
+  <!-- Deck detail / edit view -->
+  <div id="view-deck" class="hidden">
+    <div class="row between">
+      <button class="btn-ghost" id="btn-back-to-decks">‹ Decks</button>
+      <div class="menu">
+        <button class="btn-ghost btn-small" id="btn-rename-deck">Rename</button>
+        <button class="btn-ghost btn-small" id="btn-delete-deck" style="color:var(--danger);">Delete</button>
+      </div>
+    </div>
+    <h1 id="deck-title" style="margin-top:8px;"></h1>
+    <button class="btn-primary" id="btn-play" style="width:100%;">▶ Play Deck</button>
+    <button id="btn-add-card" style="width:100%; margin-top:8px;">+ Card</button>
+    <div id="card-list" class="list"></div>
+  </div>
+
+  <!-- Play view -->
+  <div id="view-play" class="hidden">
+    <div class="row between">
+      <button class="btn-ghost" id="btn-exit-play">‹ Exit</button>
+      <div class="menu">
+        <button class="btn-ghost btn-small" id="btn-practice-toggle">Type</button>
+        <button class="btn-ghost btn-small" id="btn-shuffle">Shuffle</button>
+      </div>
+    </div>
+    <div class="progress" id="play-progress"></div>
+    <div class="play-card" id="play-card-shell">
+      <div class="play-card-text" id="play-card-display"></div>
+    </div>
+    <div class="play-controls">
+      <button id="btn-flip">Flip</button>
+      <button class="btn-primary" id="btn-next">Next ›</button>
+    </div>
+    <textarea id="practice-input" class="practice-box hidden" placeholder="Type your answer here…"></textarea>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Title</h3>
+    <div id="modal-body"></div>
+    <div class="actions">
+      <button id="modal-cancel">Cancel</button>
+      <button class="btn-primary" id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" class="file-input" accept=".json,application/json">
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "flashcards.v1";
+
+  // --- State ---
+  let state = loadState();
+  let currentDeckId = null;
+  let play = null; // {order:[idx], pos:0, side:'front'}
+
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { decks: [] };
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.decks)) return { decks: [] };
+      return parsed;
+    } catch(e){ return { decks: [] }; }
+  }
+  function saveState(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ toast("Couldn't save — storage full?"); }
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function getDeck(id){ return state.decks.find(d => d.id === id); }
+  function touch(deck){ if (deck) deck.updated = Date.now(); }
+
+  // --- DOM helpers ---
+  const $ = (id) => document.getElementById(id);
+  function show(viewId){
+    ["view-decks","view-deck","view-play"].forEach(v => $(v).classList.toggle("hidden", v !== viewId));
+    window.scrollTo(0,0);
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+
+  // --- Toast ---
+  let toastTimer;
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  // --- Modal ---
+  let modalResolve = null;
+  function openModal({title, body, okText="OK", cancelText="Cancel", showCancel=true}){
+    return new Promise(resolve => {
+      $("modal-title").textContent = title;
+      $("modal-body").innerHTML = body;
+      $("modal-ok").textContent = okText;
+      $("modal-ok").classList.toggle("btn-save-close", okText === "Save & Close");
+      $("modal-cancel").textContent = cancelText;
+      $("modal-cancel").style.display = showCancel ? "" : "none";
+      $("modal").classList.add("show");
+      modalResolve = resolve;
+      // Autofocus first input
+      setTimeout(() => {
+        const first = $("modal-body").querySelector("input,textarea");
+        if (first) first.focus();
+      }, 50);
+    });
+  }
+  function closeModal(result){
+    $("modal").classList.remove("show");
+    if (modalResolve){ const r = modalResolve; modalResolve = null; r(result); }
+  }
+  function collectAndClose(extra){
+    const inputs = {};
+    $("modal-body").querySelectorAll("[data-field]").forEach(el => {
+      inputs[el.dataset.field] = el.value;
+    });
+    closeModal(Object.assign({ ok: true, values: inputs }, extra || {}));
+  }
+  $("modal-ok").addEventListener("click", () => collectAndClose());
+  $("modal-cancel").addEventListener("click", () => closeModal({ ok: false }));
+  $("modal").addEventListener("click", (e) => {
+    if (e.target.id === "modal") closeModal({ ok: false });
+  });
+  $("modal-body").addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="add-another"]');
+    if (btn) collectAndClose({ addAnother: true });
+  });
+
+  async function promptText({title, label, value="", placeholder="", multiline=false}){
+    const id = "f_" + Math.random().toString(36).slice(2);
+    const body = `
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin-bottom:6px;">${esc(label)}</label>
+      ${multiline
+        ? `<textarea data-field="${id}" placeholder="${esc(placeholder)}">${esc(value)}</textarea>`
+        : `<input data-field="${id}" type="text" placeholder="${esc(placeholder)}" value="${esc(value)}">`}
+    `;
+    const result = await openModal({title, body});
+    if (!result.ok) return null;
+    return result.values[id];
+  }
+
+  async function promptCard({title, front="", back="", allowAddAnother=false}){
+    const idF = "front_" + Math.random().toString(36).slice(2);
+    const idB = "back_" + Math.random().toString(36).slice(2);
+    const extra = allowAddAnother
+      ? `<button class="add-another" data-action="add-another" type="button">+</button>`
+      : "";
+    const body = `
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin-bottom:6px;">Front</label>
+      <textarea data-field="${idF}" placeholder="Question / prompt">${esc(front)}</textarea>
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin:12px 0 6px;">Back</label>
+      <textarea data-field="${idB}" placeholder="Answer">${esc(back)}</textarea>
+      ${extra}
+    `;
+    const result = await openModal({title, body, okText:"Save & Close"});
+    if (!result.ok) return null;
+    return {
+      front: result.values[idF].trim(),
+      back: result.values[idB].trim(),
+      addAnother: !!result.addAnother
+    };
+  }
+
+  async function confirm(message){
+    const body = `<div style="font-size:15px;color:var(--surface-fg);">${esc(message)}</div>`;
+    const result = await openModal({title:"Confirm", body, okText:"Yes", cancelText:"Cancel"});
+    return result.ok;
+  }
+
+  // --- Render: decks ---
+  function renderDecks(){
+    const list = $("deck-list");
+    if (state.decks.length === 0){
+      list.innerHTML = "";
+      return;
+    }
+    list.innerHTML = state.decks.map(d => `
+      <div class="deck-card" data-id="${d.id}">
+        <div class="info" data-action="open">
+          <div>${esc(d.name)}</div>
+          <div class="meta">${d.cards.length} card${d.cards.length===1?"":"s"}</div>
+        </div>
+        <span class="pill" data-action="open">${d.cards.length}</span>
+      </div>
+    `).join("");
+    list.querySelectorAll(".deck-card").forEach(el => {
+      el.addEventListener("click", () => {
+        currentDeckId = el.dataset.id;
+        openDeckView();
+      });
+    });
+  }
+
+  // --- Render: deck detail ---
+  function openDeckView(){
+    const deck = getDeck(currentDeckId);
+    if (!deck) return show("view-decks");
+    $("deck-title").textContent = deck.name;
+    const list = $("card-list");
+    if (deck.cards.length === 0){
+      list.innerHTML = `<div class="empty">No cards yet</div>`;
+    } else {
+      list.innerHTML = deck.cards.map((c, i) => `
+        <div class="card-item" data-idx="${i}">
+          <div class="sides">
+            <div class="side-label">Front</div>
+            <div class="side-text">${esc(c.front) || '<i style="color:var(--surface-fg)">empty</i>'}</div>
+            <div class="side-label">Back</div>
+            <div class="side-text">${esc(c.back) || '<i style="color:var(--surface-fg)">empty</i>'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn-small" data-action="edit">Edit</button>
+            <button class="btn-small btn-danger" data-action="del">Del</button>
+          </div>
+        </div>
+      `).join("");
+      list.querySelectorAll(".card-item").forEach(el => {
+        const idx = parseInt(el.dataset.idx, 10);
+        el.querySelector('[data-action="edit"]').addEventListener("click", () => editCard(idx));
+        el.querySelector('[data-action="del"]').addEventListener("click", () => deleteCard(idx));
+      });
+    }
+    show("view-deck");
+  }
+
+  async function editCard(idx){
+    const deck = getDeck(currentDeckId);
+    const card = deck.cards[idx];
+    const result = await promptCard({title:"Edit Card", front:card.front, back:card.back});
+    if (!result) return;
+    if (!result.front && !result.back){ toast("Card empty — not saved"); return; }
+    deck.cards[idx] = { front: result.front, back: result.back };
+    touch(deck);
+    saveState();
+    openDeckView();
+  }
+  async function deleteCard(idx){
+    const ok = await confirm("Delete this card?");
+    if (!ok) return;
+    const deck = getDeck(currentDeckId);
+    deck.cards.splice(idx,1);
+    touch(deck);
+    saveState();
+    openDeckView();
+  }
+
+  // --- Events: deck list view ---
+  $("btn-new-deck").addEventListener("click", async () => {
+    const name = await promptText({title:"New Deck", label:"Deck name", placeholder:""});
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed){ toast("Name can't be empty"); return; }
+    const deck = { id: uid(), name: trimmed, cards: [], created: Date.now(), updated: Date.now() };
+    state.decks.unshift(deck);
+    saveState();
+    currentDeckId = deck.id;
+    renderDecks();
+    openDeckView();
+  });
+
+  $("btn-back-to-decks").addEventListener("click", () => {
+    renderDecks();
+    show("view-decks");
+  });
+
+  $("btn-rename-deck").addEventListener("click", async () => {
+    const deck = getDeck(currentDeckId);
+    const name = await promptText({title:"Rename Deck", label:"Deck name", value:deck.name});
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed){ toast("Name can't be empty"); return; }
+    deck.name = trimmed;
+    touch(deck);
+    saveState();
+    $("deck-title").textContent = trimmed;
+  });
+
+  $("btn-delete-deck").addEventListener("click", async () => {
+    const deck = getDeck(currentDeckId);
+    const ok = await confirm(`Delete deck "${deck.name}" and all its cards?`);
+    if (!ok) return;
+    state.decks = state.decks.filter(d => d.id !== currentDeckId);
+    saveState();
+    currentDeckId = null;
+    renderDecks();
+    show("view-decks");
+  });
+
+  $("btn-add-card").addEventListener("click", async () => {
+    const deck = getDeck(currentDeckId);
+    let added = 0;
+    while (true){
+      const result = await promptCard({title: added === 0 ? "New Card" : `New Card (${added} added)`, allowAddAnother: true});
+      if (!result) break;
+      if (!result.front && !result.back){
+        toast("Card empty — skipped");
+        if (!result.addAnother) break;
+        continue;
+      }
+      deck.cards.push({ front: result.front, back: result.back });
+      touch(deck);
+      saveState();
+      added++;
+      if (!result.addAnother) break;
+    }
+    if (added > 0) toast(`Added ${added} card${added===1?"":"s"}`);
+    openDeckView();
+  });
+
+  // --- Play ---
+  const PRACTICE_KEY = "flashcards.practice.v1";
+  let practiceMode = localStorage.getItem(PRACTICE_KEY) === "1";
+
+  function applyPracticeUI(){
+    const box = $("practice-input");
+    const btn = $("btn-practice-toggle");
+    box.classList.toggle("hidden", !practiceMode);
+    btn.classList.toggle("toggle-on", practiceMode);
+    btn.textContent = practiceMode ? "Type ✓" : "Type";
+  }
+  function clearPractice(){ $("practice-input").value = ""; }
+
+  $("btn-play").addEventListener("click", () => {
+    const deck = getDeck(currentDeckId);
+    if (deck.cards.length === 0){ toast("Add some cards first"); return; }
+    play = { order: deck.cards.map((_,i) => i), pos: 0, side: "front" };
+    clearPractice();
+    applyPracticeUI();
+    renderPlay();
+    show("view-play");
+  });
+  $("btn-exit-play").addEventListener("click", () => {
+    play = null;
+    openDeckView();
+  });
+  function flipCard(){
+    if (!play) return;
+    play.side = play.side === "front" ? "back" : "front";
+    renderPlay();
+  }
+  $("btn-flip").addEventListener("click", flipCard);
+  $("btn-next").addEventListener("click", () => {
+    if (!play) return;
+    if (play.pos >= play.order.length - 1){
+      toast("Deck complete!");
+      play = null;
+      openDeckView();
+      return;
+    }
+    play.pos++;
+    play.side = "front";
+    clearPractice();
+    renderPlay();
+  });
+  $("btn-shuffle").addEventListener("click", () => {
+    if (!play) return;
+    for (let i = play.order.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i+1));
+      [play.order[i], play.order[j]] = [play.order[j], play.order[i]];
+    }
+    play.pos = 0; play.side = "front";
+    clearPractice();
+    renderPlay();
+    toast("Shuffled");
+  });
+  $("btn-practice-toggle").addEventListener("click", () => {
+    practiceMode = !practiceMode;
+    localStorage.setItem(PRACTICE_KEY, practiceMode ? "1" : "0");
+    applyPracticeUI();
+    if (practiceMode) $("practice-input").focus();
+  });
+
+  function renderPlay(){
+    const deck = getDeck(currentDeckId);
+    if (!deck || !play) return;
+    const card = deck.cards[play.order[play.pos]];
+    $("play-progress").textContent = `${play.pos+1} / ${play.order.length}  •  ${play.side === "front" ? "Front" : "Back"}`;
+    $("play-card-display").textContent = (play.side === "front" ? card.front : card.back) || "(empty)";
+    $("play-card-shell").classList.toggle("back", play.side === "back");
+    $("btn-next").textContent = (play.pos >= play.order.length - 1) ? "Finish" : "Next ›";
+  }
+
+  // Tap anywhere inside the card to flip — pointerup fires instantly, no click delay
+  $("play-card-shell").addEventListener("pointerup", (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    flipCard();
+  });
+
+  // --- Export / Import ---
+  $("btn-export").addEventListener("click", () => {
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const stamp = new Date().toISOString().slice(0,10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hive_cards-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Exported");
+  });
+
+  $("btn-import").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed || !Array.isArray(parsed.decks)) throw new Error("Invalid file");
+      const ok = await confirm(`Import ${parsed.decks.length} deck(s)? "Yes" merges with your current decks. "Cancel" aborts.`);
+      if (!ok){ e.target.value = ""; return; }
+      // Merge — new IDs to avoid collisions
+      parsed.decks.forEach(d => {
+        if (!d || !Array.isArray(d.cards)) return;
+        state.decks.push({
+          id: uid(),
+          name: String(d.name || "Imported deck"),
+          cards: d.cards.filter(c => c && typeof c === "object").map(c => ({
+            front: String(c.front || ""),
+            back: String(c.back || "")
+          })),
+          created: Date.now()
+        });
+      });
+      saveState();
+      renderDecks();
+      toast(`Imported ${parsed.decks.length} deck(s)`);
+    } catch(err){
+      toast("Import failed — bad file");
+    }
+    e.target.value = "";
+  });
+
+  // --- Sync (encrypted GitHub Gist) ---
+  const SYNC_KEY = "flashcards.sync.v1";
+  function loadSync(){
+    try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; }
+    catch(e){ return {}; }
+  }
+  function saveSync(s){ localStorage.setItem(SYNC_KEY, JSON.stringify(s)); }
+
+  function b64encode(bytes){
+    let s = ""; for (let i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  function b64decode(str){
+    const s = atob(str); const bytes = new Uint8Array(s.length);
+    for (let i=0;i<s.length;i++) bytes[i] = s.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passphrase, salt){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey(
+      "raw", enc.encode(passphrase), { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations: 200000, hash: "SHA-256" },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  async function encryptJSON(obj, passphrase){
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = new TextEncoder().encode(JSON.stringify(obj));
+    const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv }, key, plaintext
+    ));
+    return {
+      v: 1, alg: "AES-GCM/PBKDF2-SHA256-200k",
+      salt: b64encode(salt), iv: b64encode(iv), data: b64encode(ciphertext)
+    };
+  }
+
+  async function decryptJSON(envelope, passphrase){
+    if (!envelope || envelope.v !== 1) throw new Error("Unknown format");
+    const salt = b64decode(envelope.salt);
+    const iv = b64decode(envelope.iv);
+    const data = b64decode(envelope.data);
+    const key = await deriveKey(passphrase, salt);
+    const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(plaintext));
+  }
+
+  async function gistRequest(method, path, token, body){
+    const res = await fetch("https://api.github.com" + path, {
+      method,
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + token,
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(body ? {"Content-Type": "application/json"} : {})
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok){
+      const text = await res.text();
+      throw new Error(`GitHub ${res.status}: ${text.slice(0,200)}`);
+    }
+    return res.json();
+  }
+
+  const GIST_FILENAME = "flashcards.enc.json";
+
+  async function pushToGist(){
+    const cfg = loadSync();
+    if (!cfg.token || !cfg.passphrase){ toast("Set up sync first"); return; }
+    try {
+      toast("Encrypting…");
+      const envelope = await encryptJSON(state, cfg.passphrase);
+      const content = JSON.stringify(envelope, null, 2);
+      toast("Uploading…");
+      let gist;
+      if (cfg.gistId){
+        gist = await gistRequest("PATCH", `/gists/${cfg.gistId}`, cfg.token, {
+          files: { [GIST_FILENAME]: { content } }
+        });
+      } else {
+        gist = await gistRequest("POST", `/gists`, cfg.token, {
+          description: "flashcards (encrypted)",
+          public: false,
+          files: { [GIST_FILENAME]: { content } }
+        });
+        cfg.gistId = gist.id;
+        saveSync(cfg);
+      }
+      toast("Pushed ✓");
+    } catch(e){
+      toast("Push failed: " + e.message.slice(0,60));
+    }
+  }
+
+  async function pullFromGist(){
+    const cfg = loadSync();
+    if (!cfg.token || !cfg.passphrase){ toast("Set up sync first"); return; }
+    if (!cfg.gistId){ toast("No gist yet — push first"); return; }
+    try {
+      toast("Downloading…");
+      const gist = await gistRequest("GET", `/gists/${cfg.gistId}`, cfg.token);
+      const file = gist.files && gist.files[GIST_FILENAME];
+      if (!file){ toast("Gist missing data file"); return; }
+      let content = file.content;
+      if (file.truncated && file.raw_url){
+        const r = await fetch(file.raw_url);
+        content = await r.text();
+      }
+      const envelope = JSON.parse(content);
+      toast("Decrypting…");
+      let remote;
+      try { remote = await decryptJSON(envelope, cfg.passphrase); }
+      catch(e){ toast("Wrong passphrase"); return; }
+      if (!remote || !Array.isArray(remote.decks)){ toast("Bad remote data"); return; }
+      // Merge: by deck id, take newer 'updated'. New ids from either side kept.
+      const localById = new Map(state.decks.map(d => [d.id, d]));
+      const merged = [];
+      const seen = new Set();
+      remote.decks.forEach(rd => {
+        if (!rd || !rd.id) return;
+        const ld = localById.get(rd.id);
+        if (!ld) merged.push(rd);
+        else merged.push(((rd.updated||0) >= (ld.updated||0)) ? rd : ld);
+        seen.add(rd.id);
+      });
+      state.decks.forEach(ld => { if (!seen.has(ld.id)) merged.push(ld); });
+      state.decks = merged;
+      saveState();
+      renderDecks();
+      toast(`Pulled ✓ (${remote.decks.length} remote)`);
+    } catch(e){
+      toast("Pull failed: " + e.message.slice(0,60));
+    }
+  }
+
+  async function openSyncMenu(){
+    const cfg = loadSync();
+    const configured = !!(cfg.token && cfg.passphrase);
+    const status = configured
+      ? `Configured.${cfg.gistId ? " Gist: " + cfg.gistId.slice(0,8) + "…" : " No gist yet."}`
+      : "Not set up.";
+    const body = `
+      <div style="color:var(--surface-fg); font-size:14px; margin-bottom:14px;">${esc(status)}</div>
+      <button id="sync-push" class="btn-primary" style="width:100%; margin-bottom:8px; padding:14px;">↑ Push (upload to gist)</button>
+      <button id="sync-pull" class="btn-primary" style="width:100%; margin-bottom:8px; padding:14px;">↓ Pull (download &amp; merge)</button>
+      <button id="sync-setup" style="width:100%; margin-bottom:8px;">${configured ? "Change setup" : "Set up sync…"}</button>
+      ${configured ? `<button id="sync-forget" class="btn-danger" style="width:100%;">Forget sync settings on this device</button>` : ""}
+    `;
+    const p = openModal({title:"Sync", body, okText:"Close", cancelText:"", showCancel:false});
+    // Wire up buttons inside the modal
+    setTimeout(() => {
+      const push = document.getElementById("sync-push");
+      const pull = document.getElementById("sync-pull");
+      const setup = document.getElementById("sync-setup");
+      const forget = document.getElementById("sync-forget");
+      if (push) push.onclick = () => { closeModal({ok:true}); pushToGist(); };
+      if (pull) pull.onclick = () => { closeModal({ok:true}); pullFromGist(); };
+      if (setup) setup.onclick = () => { closeModal({ok:true}); openSyncSetup(); };
+      if (forget) forget.onclick = async () => {
+        const ok = await confirm("Forget token, passphrase, and gist ID on this device? Your gist on GitHub stays — you can reconnect later.");
+        if (!ok) return;
+        localStorage.removeItem(SYNC_KEY);
+        toast("Sync settings cleared");
+      };
+    }, 60);
+    await p;
+  }
+
+  async function openSyncSetup(){
+    const cfg = loadSync();
+    const body = `
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin-bottom:6px;">GitHub token (starts with github_pat_…)</label>
+      <input data-field="token" type="text" placeholder="github_pat_..." value="${esc(cfg.token||"")}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin:12px 0 6px;">Passphrase (must match on every device)</label>
+      <input data-field="pass" type="text" placeholder="passphrase you'll remember" value="${esc(cfg.passphrase||"")}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <label style="font-size:13px;color:var(--surface-fg);display:block;margin:12px 0 6px;">Existing gist ID (optional — leave blank to create new on first push)</label>
+      <input data-field="gistId" type="text" placeholder="leave blank for new" value="${esc(cfg.gistId||"")}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div style="color:var(--surface-fg);font-size:12px;margin-top:10px;line-height:1.4;">Token is stored only in this browser. Your passphrase encrypts data before upload — GitHub never sees it.</div>
+    `;
+    const result = await openModal({title:"Sync setup", body, okText:"Save"});
+    if (!result.ok) return;
+    const next = {
+      token: result.values.token.trim(),
+      passphrase: result.values.pass,
+      gistId: result.values.gistId.trim() || undefined
+    };
+    if (!next.token || !next.passphrase){ toast("Token and passphrase required"); return; }
+    saveSync(next);
+    toast("Saved. Tap Sync → Push to upload, or Pull to download.");
+  }
+
+  $("btn-sync").addEventListener("click", openSyncMenu);
+
+  // --- Themes ---
+  const THEME_KEY = "flashcards.theme.v1";
+  const THEMES = {
+    flower: {
+      name: "Flower",
+      vars: {
+        "--bg": "#0F0000",
+        "--fg": "#FFFFFF",
+        "--surface": "#B87FB2",
+        "--surface-fg": "#FFFFFF",
+        "--primary": "#FFB5FA",
+        "--primary-fg": "#4a1a45",
+        "--primary-active": "#ec9ce6",
+        "--danger": "#FF5500",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#cc4400",
+        "--input-bg": "#0D0D0D",
+        "--input-fg": "#FFFFFF",
+        "--input-border": "#1f1f1f",
+        "--btn": "#2a2a32",
+        "--btn-fg": "#FFFFFF",
+        "--btn-active": "#3a3a44",
+        "--ghost-active": "#1f1f26",
+        "--play-card": "#1c1c22",
+        "--play-card-back": "#232330"
+      }
+    },
+    light: {
+      name: "Light",
+      vars: {
+        "--bg": "#F4EDE0",
+        "--fg": "#3D362E",
+        "--surface": "#FBF6EA",
+        "--surface-fg": "#3D362E",
+        "--primary": "#87A081",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#6E8669",
+        "--danger": "#C77B6E",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#A86459",
+        "--input-bg": "#FFFFFF",
+        "--input-fg": "#3D362E",
+        "--input-border": "#DDD5C2",
+        "--btn": "#E8DFC9",
+        "--btn-fg": "#3D362E",
+        "--btn-active": "#D4C9AB",
+        "--ghost-active": "rgba(0,0,0,0.06)",
+        "--play-card": "#FBF6EA",
+        "--play-card-back": "#F0E9D8"
+      }
+    },
+    dark: {
+      name: "Dark",
+      vars: {
+        "--bg": "#121212",
+        "--fg": "#E0E0E0",
+        "--surface": "#1E1E1E",
+        "--surface-fg": "#E0E0E0",
+        "--primary": "#5B9BD5",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#4582BD",
+        "--danger": "#E57373",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#C45959",
+        "--input-bg": "#1A1A1A",
+        "--input-fg": "#E0E0E0",
+        "--input-border": "#333333",
+        "--btn": "#2A2A2A",
+        "--btn-fg": "#E0E0E0",
+        "--btn-active": "#3A3A3A",
+        "--ghost-active": "rgba(255,255,255,0.08)",
+        "--play-card": "#1E1E1E",
+        "--play-card-back": "#252525"
+      }
+    },
+    night: {
+      name: "Night",
+      vars: {
+        "--bg": "#1E1B17",
+        "--fg": "#CFC8BD",
+        "--surface": "#2A2620",
+        "--surface-fg": "#CFC8BD",
+        "--primary": "#7BA398",
+        "--primary-fg": "#15120F",
+        "--primary-active": "#639082",
+        "--danger": "#BC6E68",
+        "--danger-fg": "#F5F0EB",
+        "--danger-active": "#9E5550",
+        "--input-bg": "#181613",
+        "--input-fg": "#CFC8BD",
+        "--input-border": "#3A332B",
+        "--btn": "#2A2620",
+        "--btn-fg": "#CFC8BD",
+        "--btn-active": "#3A332B",
+        "--ghost-active": "rgba(255,255,255,0.05)",
+        "--play-card": "#2A2620",
+        "--play-card-back": "#322C25"
+      }
+    },
+    plain: {
+      name: "Plain",
+      vars: {
+        "--bg": "#FAFAFA",
+        "--fg": "#1A1A1A",
+        "--surface": "#FFFFFF",
+        "--surface-fg": "#1A1A1A",
+        "--primary": "#1A1A1A",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#000000",
+        "--danger": "#8B2E2E",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#6E2424",
+        "--input-bg": "#FFFFFF",
+        "--input-fg": "#1A1A1A",
+        "--input-border": "#D0D0D0",
+        "--btn": "#EAEAEA",
+        "--btn-fg": "#1A1A1A",
+        "--btn-active": "#D5D5D5",
+        "--ghost-active": "rgba(0,0,0,0.05)",
+        "--play-card": "#FFFFFF",
+        "--play-card-back": "#F0F0F0"
+      }
+    },
+    natural: {
+      name: "Natural",
+      vars: {
+        "--bg": "#E8DDC9",
+        "--fg": "#3A2E1F",
+        "--surface": "#F2EBDD",
+        "--surface-fg": "#3A2E1F",
+        "--primary": "#6B8E4E",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#54703D",
+        "--danger": "#B8543C",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#963F2A",
+        "--input-bg": "#F8F2E5",
+        "--input-fg": "#3A2E1F",
+        "--input-border": "#C9BFA9",
+        "--btn": "#D9CDB5",
+        "--btn-fg": "#3A2E1F",
+        "--btn-active": "#C2B698",
+        "--ghost-active": "rgba(0,0,0,0.06)",
+        "--play-card": "#F2EBDD",
+        "--play-card-back": "#E8DFC4"
+      }
+    },
+    industrial: {
+      name: "Industrial",
+      vars: {
+        "--bg": "#2A2D30",
+        "--fg": "#C8CCD0",
+        "--surface": "#3A3E42",
+        "--surface-fg": "#E0E4E8",
+        "--primary": "#E8A33D",
+        "--primary-fg": "#1A1C1E",
+        "--primary-active": "#C88820",
+        "--danger": "#C44A3A",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#A03828",
+        "--input-bg": "#1F2225",
+        "--input-fg": "#C8CCD0",
+        "--input-border": "#4A4E52",
+        "--btn": "#383C40",
+        "--btn-fg": "#C8CCD0",
+        "--btn-active": "#4A4E52",
+        "--ghost-active": "rgba(255,255,255,0.06)",
+        "--play-card": "#3A3E42",
+        "--play-card-back": "#43474B"
+      }
+    },
+    spacey: {
+      name: "Spacey",
+      vars: {
+        "--bg": "#0B0B1F",
+        "--fg": "#D4D2E6",
+        "--surface": "#1A1A2E",
+        "--surface-fg": "#D4D2E6",
+        "--primary": "#9D4EDD",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#7B3BC4",
+        "--danger": "#FF4081",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#D81B60",
+        "--input-bg": "#14142B",
+        "--input-fg": "#D4D2E6",
+        "--input-border": "#2A2A4A",
+        "--btn": "#1A1A2E",
+        "--btn-fg": "#D4D2E6",
+        "--btn-active": "#2A2A4A",
+        "--ghost-active": "rgba(157,78,221,0.15)",
+        "--play-card": "#1A1A2E",
+        "--play-card-back": "#232342"
+      }
+    },
+    colorful: {
+      name: "Colorful",
+      vars: {
+        "--bg": "#FAFBFF",
+        "--fg": "#1A237E",
+        "--surface": "#FFE0E9",
+        "--surface-fg": "#1A237E",
+        "--primary": "#00BCD4",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#0097A7",
+        "--danger": "#F44336",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#D32F2F",
+        "--input-bg": "#FFFFFF",
+        "--input-fg": "#1A237E",
+        "--input-border": "#FFD54F",
+        "--btn": "#FFEB3B",
+        "--btn-fg": "#1A237E",
+        "--btn-active": "#FBC02D",
+        "--ghost-active": "rgba(0,188,212,0.15)",
+        "--play-card": "#C8E6C9",
+        "--play-card-back": "#FFCDD2"
+      }
+    },
+    moon: {
+      name: "Moon",
+      vars: {
+        "--bg": "#1A1F2E",
+        "--fg": "#E8E9F0",
+        "--surface": "#2A3142",
+        "--surface-fg": "#E8E9F0",
+        "--primary": "#B8C5D6",
+        "--primary-fg": "#1A1F2E",
+        "--primary-active": "#95A3B8",
+        "--danger": "#C97070",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#A85555",
+        "--input-bg": "#141828",
+        "--input-fg": "#E8E9F0",
+        "--input-border": "#3A4256",
+        "--btn": "#2A3142",
+        "--btn-fg": "#E8E9F0",
+        "--btn-active": "#3A4256",
+        "--ghost-active": "rgba(232,233,240,0.08)",
+        "--play-card": "#2A3142",
+        "--play-card-back": "#34394C"
+      }
+    },
+    earthy: {
+      name: "Earthy",
+      vars: {
+        "--bg": "#2D2419",
+        "--fg": "#E8DCC8",
+        "--surface": "#3D2F22",
+        "--surface-fg": "#E8DCC8",
+        "--primary": "#B8753C",
+        "--primary-fg": "#FFFFFF",
+        "--primary-active": "#965E2D",
+        "--danger": "#8B3A2E",
+        "--danger-fg": "#FFFFFF",
+        "--danger-active": "#6E2E25",
+        "--input-bg": "#1F1813",
+        "--input-fg": "#E8DCC8",
+        "--input-border": "#4A3A2A",
+        "--btn": "#3D2F22",
+        "--btn-fg": "#E8DCC8",
+        "--btn-active": "#4A3A2A",
+        "--ghost-active": "rgba(232,220,200,0.06)",
+        "--play-card": "#3D2F22",
+        "--play-card-back": "#463625"
+      }
+    }
+  };
+
+  function applyTheme(id){
+    const t = THEMES[id];
+    if (!t) return false;
+    for (const [k, v] of Object.entries(t.vars)){
+      document.documentElement.style.setProperty(k, v);
+    }
+    localStorage.setItem(THEME_KEY, id);
+    return true;
+  }
+
+  function currentThemeId(){
+    return localStorage.getItem(THEME_KEY) || "flower";
+  }
+
+  async function openThemesMenu(){
+    const current = currentThemeId();
+    const rows = Object.entries(THEMES).map(([id, t]) =>
+      `<button class="theme-row${id === current ? " theme-current" : ""}" data-theme-id="${esc(id)}">${esc(t.name)}${id === current ? "  ✓" : ""}</button>`
+    ).join("");
+    const body = `
+      <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>
+      <div style="color:var(--surface-fg);font-size:12px;margin-top:14px;line-height:1.4;opacity:0.85;">More themes coming soon. Your current theme is saved on this device.</div>
+    `;
+    const p = openModal({title:"Themes", body, okText:"Close", cancelText:"", showCancel:false});
+    setTimeout(() => {
+      document.querySelectorAll("[data-theme-id]").forEach(b => {
+        b.onclick = () => {
+          const id = b.dataset.themeId;
+          applyTheme(id);
+          closeModal({ok:true});
+          toast("Applied " + THEMES[id].name);
+        };
+      });
+    }, 60);
+    await p;
+  }
+
+  $("btn-themes").addEventListener("click", openThemesMenu);
+
+  // Apply saved theme on load (falls back to flower)
+  applyTheme(currentThemeId());
+
+  // --- Initial render ---
+  renderDecks();
+  show("view-decks");
+
+  // Prevent iOS pinch-zoom interfering
+  document.addEventListener("gesturestart", e => e.preventDefault());
+
+  // Register service worker for offline use (only when served over http/https)
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
