@@ -1,0 +1,15 @@
+{
+  "name": "Hive_cards",
+  "short_name": "Hive_cards",
+  "description": "Flashcards with encrypted cross-device sync.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F0000",
+  "theme_color": "#0F0000",
+  "icons": [
+    { "src": "./Hive_Cards2.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "./Hive_Cards2.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ]
+}
